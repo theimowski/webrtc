@@ -1,8 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"time"
+	"os"
 
 	"github.com/pion/webrtc/v2"
 	"github.com/pion/webrtc/v2/examples/internal/signal"
@@ -29,32 +30,29 @@ func main() {
 	// Set the handler for ICE connection state
 	// This will notify you when the peer has connected/disconnected
 	peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-		fmt.Printf("ICE Connection State has changed: %s\n", connectionState.String())
+		//fmt.Printf("ICE Connection State has changed: %s\n", connectionState.String())
 	})
 
 	// Register data channel creation handling
 	peerConnection.OnDataChannel(func(d *webrtc.DataChannel) {
-		fmt.Printf("New DataChannel %s %d\n", d.Label(), d.ID())
+		//fmt.Printf("New DataChannel %s %d\n", d.Label(), d.ID())
 
 		// Register channel opening handling
 		d.OnOpen(func() {
-			fmt.Printf("Data channel '%s'-'%d' open. Random messages will now be sent to any connected DataChannels every 5 seconds\n", d.Label(), d.ID())
+			//fmt.Printf("Data channel '%s'-'%d' open. Stdin will echo messages\n", d.Label(), d.ID())
+			reader := bufio.NewReader(os.Stdin)
 
-			for range time.NewTicker(5 * time.Second).C {
-				message := signal.RandSeq(15)
-				fmt.Printf("Sending '%s'\n", message)
-
-				// Send the message as text
-				sendErr := d.SendText(message)
-				if sendErr != nil {
-					panic(sendErr)
-				}
+			// TODO: mitigate high CPU consumption - might be due to infinite while true loop
+			for true {
+				message, _ := reader.ReadString('\n')
+				d.SendText(message)
 			}
+
 		})
 
 		// Register text message handling
 		d.OnMessage(func(msg webrtc.DataChannelMessage) {
-			fmt.Printf("Message from DataChannel '%s': '%s'\n", d.Label(), string(msg.Data))
+			fmt.Printf("%s\n", string(msg.Data))
 		})
 	})
 
