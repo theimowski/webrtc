@@ -40,12 +40,10 @@ func main() {
 		// Register channel opening handling
 		d.OnOpen(func() {
 			//fmt.Printf("Data channel '%s'-'%d' open. Stdin will echo messages\n", d.Label(), d.ID())
-			reader := bufio.NewReader(os.Stdin)
+			scanner := bufio.NewScanner(os.Stdin)
 
-			// TODO: mitigate high CPU consumption - might be due to infinite while true loop
-			for true {
-				message, _ := reader.ReadString('\n')
-				d.SendText(message)
+			for scanner.Scan() {
+				d.SendText(scanner.Text())
 			}
 
 		})
